@@ -6,29 +6,29 @@ import math
 import image
 from pyb import UART
 
-# ================= RESOLUCIÓN =================
+# RESOLUCIÓN DE LA IMAGEN
 ANCHO = 320
 ALTO = 240
 
-# ================= PARÁMETROS =================
+# PARÁMETROS AJUSTABLES
 AREA_MINIMA_CERCA = 100
 AREA_MINIMA_LEJOS = 4
 PIXELS_MIN = 3
 
-# ================= UART =================
+# COMUNICACION UART 
 uart = UART(3, 115200, timeout_char=0)
 uart.init(115200, bits=8, parity=None, stop=1)
 
-# ================= THRESHOLDS =================
+# THRESHOLDS
 TH_BALL   = (40, 100, 30, 127, 20, 127)
 TH_GOAL_Y = (35, 100, -128, -10, -128, -10) #(50, 73, -55, 48, 8, 28)
 TH_GOAL_B = (35, 100, -128, -10, -128, -10)
 
-# ================= CENTRO =================
+# CENTRO DE LA IMAGEN necesita ajuste
 X_CENTER = ANCHO // 2
 Y_CENTER = ALTO // 2
 
-# ================= INIT =================
+# INICIALIZACIÓN 
 def initialize_open():
     sensor.reset()
     sensor.set_pixformat(sensor.RGB565)
@@ -47,7 +47,7 @@ def initialize_open():
     sensor.set_hmirror(True)
     sensor.set_transpose(True)
 
-# ================= UTIL =================
+# UTILIDADES
 def get_biggest_blob(blobs):
     return max(blobs, key=lambda b: b.area()) if blobs else None
 
@@ -58,7 +58,7 @@ def angle(cx, cy):
     a = math.degrees(math.atan2(cy - Y_CENTER, cx - X_CENTER))
     return a + 360 if a < 0 else a
 
-# ================= MAIN =================
+# MAIN
 def main():
     initialize_open()
     clock = time.clock()
@@ -67,7 +67,7 @@ def main():
         clock.tick()
         img = sensor.snapshot()
 
-        # ================= PELOTA =================
+        # PELOTA
         distance_b = 0
         angle_b = 0
 
@@ -113,7 +113,7 @@ def main():
                     angle_b = -(angle(blob.cx(), blob.cy()) - 180)
                     break
 
-        # ================= PORTERÍA AMARILLA =================
+        # PORTERÍA AMARILLA 
         distance_g = 0
         angle_g = 0
 
@@ -131,7 +131,7 @@ def main():
             distance_g = distance(blob.cx(), blob.cy())
             angle_g = -(angle(blob.cx(), blob.cy()) - 180)
 
-        # ================= PORTERÍA AZUL =================
+        #PORTERÍA AZUL
         distance_gop = 0
         angle_gop = 0
 
@@ -149,7 +149,7 @@ def main():
             distance_gop = distance(blob.cx(), blob.cy())
             angle_gop = -(angle(blob.cx(), blob.cy()) - 180)
 
-        # ================= UART =================
+        # ENVIO DE DATOS UART
         data = "{} {} {} {} {} {}\n".format(
             distance_b, angle_b,
             distance_g, angle_g,
@@ -160,5 +160,5 @@ def main():
         uart.write(data)
         pyb.delay(50)
 
-# ================= START =================
+# INICIO
 main()
