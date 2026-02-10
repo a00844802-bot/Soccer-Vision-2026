@@ -7,13 +7,13 @@ import image
 from pyb import UART
 
 # IMAGE RESOLUTION
-ANCHO = 320
-ALTO = 240
+CAMERA_WIDTH = 320
+CAMERA_HEIGHT = 240
 
 # ADJUSTABLE PARAMETERS
-AREA_MINIMA_CERCA = 100
-AREA_MINIMA_LEJOS = 4
-PIXELS_MIN = 3
+MIN_CLOSE_AREA = 100
+MIN_FAR_AREA = 4
+MON_PIXELS = 3
 
 # UART COMMUNICATION 
 uart = UART(3, 115200, timeout_char=0)
@@ -25,8 +25,8 @@ TH_GOAL_Y = (50, 73, -55, 48, 8, 28)
 TH_GOAL_B = (35, 100, -128, -10, -128, -10)
 
 # IMAGE CENTER 
-X_CENTER = ANCHO // 2
-Y_CENTER = ALTO // 2
+X_CENTER = CAMERA_WIDTH // 2
+Y_CENTER = CAMERA_HEIGHT // 2
 
 # INITIALIZATION 
 def initialize_open():
@@ -73,8 +73,8 @@ def main():
 
         blobs = img.find_blobs(
             [TH_BALL],
-            pixels_threshold=PIXELS_MIN,
-            area_threshold=AREA_MINIMA_LEJOS,
+            pixels_threshold=MON_PIXELS,
+            area_threshold=MIN_FAR_AREA,
             merge=True
         )
 
@@ -92,11 +92,11 @@ def main():
                 #circularidad = blob.compactness() # compactness = (perímeter²) / (4π × área) Values between 1 and ∞, being 1 a perfect circle
 
                 # pelota cerca 
-                if area >= AREA_MINIMA_CERCA and circularidad > 0.7:
+                if area >= MIN_CLOSE_AREA and circularidad > 0.7:
                     valido = True
 
                 # pelota lejos (Casi un punto/cuidado cables) 
-                elif AREA_MINIMA_LEJOS <= area < AREA_MINIMA_CERCA:
+                elif MIN_FAR_AREA <= area < MIN_CLOSE_AREA:
                     valido = True
 
                 else:
@@ -106,7 +106,7 @@ def main():
                     img.draw_rectangle(blob.rect(), color=(255, 255, 255))
                     img.draw_cross(blob.cx(), blob.cy(), color=(255, 255, 255))
 
-                    if area >= AREA_MINIMA_CERCA:
+                    if area >= MIN_CLOSE_AREA:
                         radio = int((blob.w() + blob.h()) / 4)
                         img.draw_circle(blob.cx(), blob.cy(), radio, color=(255,255,255))
 
