@@ -88,21 +88,21 @@ def main():
 
             for blob in blobs:
                 area = blob.area()
-                circularidad = blob.roundness() # roundness = (4π × área) / (perímeter²) Values between 0 and 1, being 1 a perfect circle
-                #circularidad = blob.compactness() # compactness = (perímeter²) / (4π × área) Values between 1 and ∞, being 1 a perfect circle
+                circularity = blob.roundness() # roundness = (4π × área) / (perímeter²) Values between 0 and 1, being 1 a perfect circle
+                #circularity= blob.compactness() # compactness = (perímeter²) / (4π × área) Values between 1 and ∞, being 1 a perfect circle
 
-                # pelota cerca 
-                if area >= MIN_CLOSE_AREA and circularidad > 0.7:
-                    valido = True
+                # Near ball (Larger and more circular blobs)
+                if area >= MIN_CLOSE_AREA and circularity > 0.7:
+                    valid_blob = True
 
-                # pelota lejos (Casi un punto/cuidado cables) 
+                # Far ball (Almost a point/caution cables) 
                 elif MIN_FAR_AREA <= area < MIN_CLOSE_AREA:
-                    valido = True
+                    valid_blob = True
 
                 else:
-                    valido = False
+                    valid_blob = False
 
-                if valido:
+                if valid_blob:
                     img.draw_rectangle(blob.rect(), color=(255, 255, 255))
                     img.draw_cross(blob.cx(), blob.cy(), color=(255, 255, 255))
 
