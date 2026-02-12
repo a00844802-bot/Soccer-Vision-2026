@@ -1,3 +1,10 @@
+'''
+ * file Vision-Frontal.py
+ * author Jared Aldana Palacios 
+ * brief Source file for the OpenMV
+ * date 2026-02-12
+'''
+
 import sensor
 import time
 import utime
