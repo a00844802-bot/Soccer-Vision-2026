@@ -30,6 +30,7 @@ uart.init(115200, bits=8, parity=None, stop=1)
 BALL_COLOR_THRESHOLD   = (40, 100, 30, 127, 20, 127)
 THRESHOLD_YELLOW_GOAL = (50, 73, -55, 48, 8, 28)
 THRESHOLD_BLUE_GOAL = (35, 100, -128, -10, -128, -10)
+BALL_MIN_CIRCULARITY = 0.5
 
 # IMAGE CENTER 
 X_CENTER = CAMERA_WIDTH // 2
@@ -99,7 +100,7 @@ def main():
                 #circularity= blob.compactness() # compactness = (perímeter²) / (4π × área) Values between 1 and ∞, being 1 a perfect circle
 
                 # Near ball (Larger and more circular blobs)
-                if area >= MIN_CLOSE_AREA and circularity > 0.7:
+                if area >= MIN_CLOSE_AREA and circularity > BALL_MIN_CIRCULARITY:
                     valid_blob = True
 
                 # Far ball (Almost a point/caution cables) 

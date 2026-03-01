@@ -19,6 +19,7 @@ UART_BAUDRATE = 115200
 THRESHOLD_BALL = (23, 93, 20, 83, 87, -4)     
 THRESHOLD_YELLOW_GOAL = (12, 18, 5, -9, -14, -3)  
 THRESHOLD_BLUE_GOAL = (30, 63, -11, 8, 38, 15)  
+BALL_MIN_CIRCULARITY = 0.5
 
 # Reference center of the robot (Adjust to the center of the mirror)
 X_CENTER = 144
@@ -118,10 +119,10 @@ def find_ball(img):
             circularity = blob.roundness() 
             
             # Near ball
-            if area >= MINIMUN_CLOSE_AREA and circularity > 0.5:
+            if area >= MINIMUN_CLOSE_AREA and circularity > BALL_MIN_CIRCULARITY:
                 valid = True
             # Far ball
-            elif MINIMUN_FAR_AREA <= area < MINIMUN_CLOSE_AREA and circularity > 0.5:
+            elif MINIMUN_FAR_AREA <= area < MINIMUN_CLOSE_AREA and circularity > BALL_MIN_CIRCULARITY:
                 valid = True
             else:
                 valid = False
