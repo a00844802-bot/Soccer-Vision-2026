@@ -16,10 +16,19 @@ UART_PORT = 3
 UART_BAUDRATE = 115200
 
 
-THRESHOLD_BALL = (23, 93, 20, 83, 87, -4)     
-THRESHOLD_YELLOW_GOAL = (12, 18, 5, -9, -14, -3)  
-THRESHOLD_BLUE_GOAL = (30, 63, -11, 8, 38, 15)  
-BALL_MIN_CIRCULARITY = 0.5
+THRESHOLD_BALL_1 =  (40, 100, 30, 127, 20, 127)
+THRESHOLD_BALL_2 =  (40, 100, 30, 127, 20, 127)
+THRESHOLD_BALL_3 =  (40, 100, 30, 127, 20, 127)
+
+THRESHOLD_YELLOW_GOAL_1 = (50, 73, -55, 48, 8, 28)
+THRESHOLD_YELLOW_GOAL_2 = (35, 71, 9, 28, 39, 74)
+THRESHOLD_YELLOW_GOAL_3 = (50, 75, 30, 45, 45, 70)
+
+THRESHOLD_BLUE_GOAL_1 = (35, 100, -128, -10, -128, -10)
+THRESHOLD_BLUE_GOAL_2 = (35, 100, -128, -10, -128, -10)
+THRESHOLD_BLUE_GOAL_3 = (35, 100, -128, -10, -128, -10)
+
+BALL_MIN_CIRCULARITY = 0.3
 
 # Reference center of the robot (Adjust to the center of the mirror)
 X_CENTER = 144
@@ -47,10 +56,10 @@ YELLOW_GOAL_MIN_DISTANCE = 10.0
 
 
 # Camera configuration
-CAMERA_EXPOSURE = 25000  
+CAMERA_EXPOSURE = 45000
 CAMERA_GAIN_CEILING = 16
-CAMERA_BRIGHTNESS = 1
-CAMERA_CONTRAST = -5
+CAMERA_BRIGHTNESS = -3
+CAMERA_CONTRAST = -4
 CAMERA_SATURATION = -6
 
 # Delay between readings (in milliseconds) 
@@ -99,7 +108,7 @@ def initialize_uart():
 def find_ball(img):
 
     blobs = img.find_blobs(
-        [THRESHOLD_BALL], 
+        [THRESHOLD_BALL_1, THRESHOLD_BALL_2, THRESHOLD_BALL_3], 
         area_threshold=BALL_AREA_THRESHOLD, 
         merge=True
     )
@@ -107,7 +116,7 @@ def find_ball(img):
     valid_blobs = []
     
     if blobs:
-        # Prioritize larger blobs and those closer to the center
+               # Prioritize larger blobs and those closer to the center
         blobs = sorted(
             blobs,
             key=lambda BLOBS: (BLOBS.area(), -calculate_distance(BLOBS)),
@@ -137,39 +146,45 @@ def find_ball(img):
                     img.draw_circle(blob.cx(), blob.cy(), radio, color=(255, 255, 255))
                 
                 valid_blobs.append(blob)
-                break  
-    
+                break      
+            
     return valid_blobs
 
 def find_blue_goal(img):
 
     blobs = img.find_blobs(
-        [THRESHOLD_BLUE_GOAL],
+        [THRESHOLD_BLUE_GOAL_1, THRESHOLD_BLUE_GOAL_2, THRESHOLD_BLUE_GOAL_3],
         pixels_threshold=GOAL_PIXELS_THRESHOLD,
         area_threshold=GOAL_AREA_THRESHOLD,
         merge=True
     )
     
-    for blob in blobs:
-        img.draw_rectangle(blob.rect(), color=(0, 255, 0))
-        img.draw_cross(blob.cx(), blob.cy(), color=(0, 255, 0))
+    biggest_blue = []
+    if blobs:
+        blob = max(blobs, key=lambda b: b.pixels())
+        img.draw_rectangle(blob.rect(), color=(0, 0, 255))
+        img.draw_cross(blob.cx(), blob.cy(), color=(0, 0, 255))
+        biggest_blue.append(blob)
     
-    return blobs
+    return biggest_blue
 
 def find_yellow_goal(img):
 
     blobs = img.find_blobs(
-        [THRESHOLD_YELLOW_GOAL],
+        [THRESHOLD_YELLOW_GOAL_1, THRESHOLD_YELLOW_GOAL_2, THRESHOLD_YELLOW_GOAL_3],
         pixels_threshold=GOAL_PIXELS_THRESHOLD,
         area_threshold=GOAL_AREA_THRESHOLD,
         merge=True
     )
     
-    for blob in blobs:
-        img.draw_rectangle(blob.rect(), color=(0, 0, 255))
-        img.draw_cross(blob.cx(), blob.cy(), color=(0, 0, 255))
+    biggest_yellow = []
+    if blobs:
+        blob = max(blobs, key=lambda b: b.pixels())
+        img.draw_rectangle(blob.rect(), color=(0, 255, 0))
+        img.draw_cross(blob.cx(), blob.cy(), color=(0, 255, 0))
+        biggest_yellow.append(blob)
     
-    return blobs
+    return biggest_yellow
 
 # GEOMETRIC CALCULATIONS 
 
@@ -236,14 +251,8 @@ def main():
             blob = ball_blobs[0]
             ball_distance = calculate_distance(blob)
             ball_angle = calculate_angle(blob)
-            
             ball_angle = apply_dead_zone(ball_angle, BALL_DEAD_ZONE)
-            
-            ball_distance = correct_distance(
-                ball_distance, 
-                ball_angle, 
-                BALL_DISTANCE_CORRECTION
-            )
+            ball_distance = correct_distance(ball_distance, ball_angle, BALL_DISTANCE_CORRECTION)
         else:
             ball_distance = 0.0
             ball_angle = 0.0
@@ -254,11 +263,7 @@ def main():
             blob = blue_goal_blobs[0]
             blue_goal_distance = calculate_distance(blob)
             blue_goal_angle = calculate_angle(blob)
-            
-            blue_goal_angle = apply_dead_zone(
-                blue_goal_angle, 
-                BLUE_GOAL_DEAD_ZONE
-            )
+            blue_goal_angle = apply_dead_zone(blue_goal_angle, BLUE_GOAL_DEAD_ZONE)
         else:
             blue_goal_distance = 0.0
             blue_goal_angle = 0.0
@@ -269,15 +274,8 @@ def main():
             blob = yellow_goal_blobs[0]
             yellow_goal_distance = calculate_distance(blob)
             yellow_goal_angle = calculate_angle(blob)
-            
-            yellow_goal_angle = apply_dead_zone(yellow_goal_angle, YELLOW_GOAL_DEAD_ZONE)
-            
-            yellow_goal_distance = correct_distance(
-                yellow_goal_distance,
-                yellow_goal_angle,
-                YELLOW_GOAL_DISTANCE_CORRECTION
-            )
-            
+            yellow_goal_angle = apply_dead_zones(yellow_goal_angle, YELLOW_GOAL_DEAD_ZONE)
+            yellow_goal_distance = correct_distance(yellow_goal_distance, yellow_goal_angle, YELLOW_GOAL_DISTANCE_CORRECTION)
             if yellow_goal_distance < YELLOW_GOAL_MIN_DISTANCE:
                 yellow_goal_distance = YELLOW_GOAL_MIN_DISTANCE
         else:
@@ -286,12 +284,9 @@ def main():
         
         # SEND DATA VIA UART 
         data = "{:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f}\n".format(
-            ball_distance,
-            ball_angle,
-            blue_goal_distance,
-            blue_goal_angle,
-            yellow_goal_distance,
-            yellow_goal_angle
+            ball_distance, ball_angle,
+            blue_goal_distance, blue_goal_angle,
+            yellow_goal_distance, yellow_goal_angle
         )
         
         print("Sending:", data.strip())

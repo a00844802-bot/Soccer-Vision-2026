@@ -27,10 +27,19 @@ uart = UART(3, 115200, timeout_char=0)
 uart.init(115200, bits=8, parity=None, stop=1)
 
 # THRESHOLDS
-BALL_COLOR_THRESHOLD   = (40, 100, 30, 127, 20, 127)
-THRESHOLD_YELLOW_GOAL = (50, 73, -55, 48, 8, 28)
-THRESHOLD_BLUE_GOAL = (35, 100, -128, -10, -128, -10)
-BALL_MIN_CIRCULARITY = 0.5
+THRESHOLD_BALL_1 = (23, 93, 20, 83, 87, -4)
+THRESHOLD_BALL_2 = (20, 85, 15, 75, 10, 70)
+THRESHOLD_BALL_3 = (15, 70, 25, 90, 5, 60)
+
+THRESHOLD_YELLOW_GOAL_1 = (55, 75, -5, 10, 25, 50)
+THRESHOLD_YELLOW_GOAL_2 = (48, 82, -10, 12, 15, 62)
+THRESHOLD_YELLOW_GOAL_3 = (35, 95, -15, 25, 10, 85)
+
+THRESHOLD_BLUE_GOAL_1 = (14, 13, -3, 12, -11, -8)
+THRESHOLD_BLUE_GOAL_2 = (9,  17, -5, 18, -14, -3)
+THRESHOLD_BLUE_GOAL_3 = (0,  22, -8, 22, -20,  2)
+
+BALL_MIN_CIRCULARITY = 0.3
 
 # IMAGE CENTER 
 X_CENTER = CAMERA_WIDTH // 2
@@ -48,9 +57,9 @@ def initialize_open():
     sensor.set_auto_whitebal(False)
     sensor.set_auto_exposure(False, exposure_us=45000)
 
-    sensor.set_brightness(-1)
-    sensor.set_contrast(-4)
-    sensor.set_saturation(-6)
+    sensor.set_brightness(-3)
+    sensor.set_contrast(-1)
+    sensor.set_saturation(-4)
 
     sensor.set_hmirror(True)
     sensor.set_transpose(True)
@@ -80,7 +89,7 @@ def main():
         angle_ball = 0
 
         blobs = img.find_blobs(
-            [BALL_COLOR_THRESHOLD],
+            [THRESHOLD_BALL_1, THRESHOLD_BALL_2, THRESHOLD_BALL_3],
             pixels_threshold=MON_PIXELS,
             area_threshold=MIN_FAR_AREA,
             merge=True
@@ -127,7 +136,7 @@ def main():
         angle_yellow_goal = 0
 
         blobs = img.find_blobs(
-            [THRESHOLD_YELLOW_GOAL],
+            [THRESHOLD_YELLOW_GOAL_1, THRESHOLD_YELLOW_GOAL_2, THRESHOLD_YELLOW_GOAL_3],
             pixels_threshold=200,
             area_threshold=800,
             merge=True
@@ -145,7 +154,7 @@ def main():
         angle_blue_goal = 0
 
         blobs = img.find_blobs(
-            [THRESHOLD_BLUE_GOAL],
+            [THRESHOLD_BLUE_GOAL_1, THRESHOLD_BLUE_GOAL_2, THRESHOLD_BLUE_GOAL_3],
             pixels_threshold=200,
             area_threshold=800,
             merge=True
