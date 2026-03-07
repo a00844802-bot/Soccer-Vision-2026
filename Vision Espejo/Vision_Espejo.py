@@ -3,6 +3,7 @@
  * author Jared Aldana Palacios 
  * brief Source file for the OpenMV
  * date 2026-02-26
+ * - Comments: short bullet notes added
 '''
 
 import sensor
@@ -11,7 +12,7 @@ import pyb
 import math
 from pyb import UART
 
-# UART Communication
+# - UART Communication
 UART_PORT = 3
 UART_BAUDRATE = 115200
 
@@ -30,7 +31,7 @@ THRESHOLD_BLUE_GOAL_3 = (35, 100, -128, -10, -128, -10)
 
 BALL_MIN_CIRCULARITY = 0.3
 
-# Reference center of the robot (Adjust to the center of the mirror)
+# - Reference center of the robot (mirror center)
 X_CENTER = 144
 Y_CENTER = 148
 
@@ -62,18 +63,20 @@ CAMERA_BRIGHTNESS = -3
 CAMERA_CONTRAST = -4
 CAMERA_SATURATION = -6
 
-# Delay between readings (in milliseconds) 
+# - Loop delay (ms)
 LOOP_DELAY = 50
 
 # INITIALIZATION 
 
 def initialize_camera():
 
+    # - blink LED during init
     led = pyb.LED(1)
     led.on()
     time.sleep(1)
     led.off()
     
+    # - configure sensor
     sensor.reset()
     sensor.set_pixformat(sensor.RGB565)
     sensor.set_framesize(sensor.QVGA)  # 320x240
@@ -98,6 +101,7 @@ def initialize_camera():
 
 def initialize_uart():
 
+    # - setup UART for communication
     uart = UART(UART_PORT, UART_BAUDRATE, timeout_char=0)
     uart.init(UART_BAUDRATE, bits=8, parity=None, stop=1)
     print("UART configured on port", UART_PORT, "at", UART_BAUDRATE, "baud\n")
@@ -116,7 +120,7 @@ def find_ball(img):
     valid_blobs = []
     
     if blobs:
-               # Prioritize larger blobs and those closer to the center
+        # - Prioritize larger blobs and those closer to the center
         blobs = sorted(
             blobs,
             key=lambda BLOBS: (BLOBS.area(), -calculate_distance(BLOBS)),
@@ -161,6 +165,7 @@ def find_blue_goal(img):
     
     biggest_blue = []
     if blobs:
+        # - pick biggest blue blob
         blob = max(blobs, key=lambda b: b.pixels())
         img.draw_rectangle(blob.rect(), color=(0, 0, 255))
         img.draw_cross(blob.cx(), blob.cy(), color=(0, 0, 255))
@@ -179,6 +184,7 @@ def find_yellow_goal(img):
     
     biggest_yellow = []
     if blobs:
+        # - pick biggest yellow blob
         blob = max(blobs, key=lambda b: b.pixels())
         img.draw_rectangle(blob.rect(), color=(0, 255, 0))
         img.draw_cross(blob.cx(), blob.cy(), color=(0, 255, 0))
@@ -274,7 +280,7 @@ def main():
             blob = yellow_goal_blobs[0]
             yellow_goal_distance = calculate_distance(blob)
             yellow_goal_angle = calculate_angle(blob)
-            yellow_goal_angle = apply_dead_zones(yellow_goal_angle, YELLOW_GOAL_DEAD_ZONE)
+            yellow_goal_angle = apply_dead_zone(yellow_goal_angle, YELLOW_GOAL_DEAD_ZONE)
             yellow_goal_distance = correct_distance(yellow_goal_distance, yellow_goal_angle, YELLOW_GOAL_DISTANCE_CORRECTION)
             if yellow_goal_distance < YELLOW_GOAL_MIN_DISTANCE:
                 yellow_goal_distance = YELLOW_GOAL_MIN_DISTANCE
