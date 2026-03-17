@@ -1,6 +1,6 @@
 '''
  * file Vision-Frontal.py
- * author Jared Aldana Palacios 
+ * author Jared Aldana Palacios
  * brief Source file for the OpenMV
  * date 2026-02-12
 '''
@@ -22,44 +22,44 @@ MIN_CLOSE_AREA = 100
 MIN_FAR_AREA = 4
 MON_PIXELS = 3
 
-# UART COMMUNICATION 
+# UART COMMUNICATION
 uart = UART(3, 115200, timeout_char=0)
 uart.init(115200, bits=8, parity=None, stop=1)
 
 # THRESHOLDS
-THRESHOLD_BALL_1 = (23, 93, 20, 83, 87, -4)
-THRESHOLD_BALL_2 = (20, 85, 15, 75, 10, 70)
-THRESHOLD_BALL_3 = (15, 70, 25, 90, 5, 60)
+THRESHOLD_BALL_1 = (24, 77, 32, 61, 41, 6)
+THRESHOLD_BALL_2 = (24, 77, 32, 61, 41, 6)
+THRESHOLD_BALL_3 = (24, 77, 32, 61, 41, 6)
 
-THRESHOLD_YELLOW_GOAL_1 = (55, 75, -5, 10, 25, 50)
+THRESHOLD_YELLOW_GOAL_1 = (17, 37, -6, 18, 32, 12)
 THRESHOLD_YELLOW_GOAL_2 = (48, 82, -10, 12, 15, 62)
 THRESHOLD_YELLOW_GOAL_3 = (35, 95, -15, 25, 10, 85)
 
 THRESHOLD_BLUE_GOAL_1 = (14, 13, -3, 12, -11, -8)
 THRESHOLD_BLUE_GOAL_2 = (9,  17, -5, 18, -14, -3)
-THRESHOLD_BLUE_GOAL_3 = (0,  22, -8, 22, -20,  2)
+THRESHOLD_BLUE_GOAL_3 = (13, 19, 8, 5, -18, -3)
 
 BALL_MIN_CIRCULARITY = 0.3
 
-# IMAGE CENTER 
+# IMAGE CENTER
 X_CENTER = CAMERA_WIDTH // 2
 Y_CENTER = CAMERA_HEIGHT // 2
 
-# INITIALIZATION 
+# INITIALIZATION
 def initialize_open():
     sensor.reset()
     sensor.set_pixformat(sensor.RGB565)
     sensor.set_framesize(sensor.QVGA)
-    sensor.skip_frames(time=3000)
+    sensor.skip_frames(time=0)
 
     sensor.set_auto_gain(False)
     sensor.set_gainceiling(16)
     sensor.set_auto_whitebal(False)
     sensor.set_auto_exposure(False, exposure_us=45000)
 
-    sensor.set_brightness(-3)
-    sensor.set_contrast(-1)
-    sensor.set_saturation(-4)
+    sensor.set_brightness(-5)
+    sensor.set_contrast(-5)
+    sensor.set_saturation(-5)
 
     sensor.set_hmirror(True)
     sensor.set_transpose(True)
@@ -83,6 +83,7 @@ def main():
     while True:
         clock.tick()
         img = sensor.snapshot()
+        img.draw_rectangle((0, 0, 25, img.height()), color=(0, 0, 0), fill=True)
 
         # BALL DETECTION
         distance_ball = 0
@@ -112,7 +113,7 @@ def main():
                 if area >= MIN_CLOSE_AREA and circularity > BALL_MIN_CIRCULARITY:
                     valid_blob = True
 
-                # Far ball (Almost a point/caution cables) 
+                # Far ball (Almost a point/caution cables)
                 elif MIN_FAR_AREA <= area < MIN_CLOSE_AREA:
                     valid_blob = True
 

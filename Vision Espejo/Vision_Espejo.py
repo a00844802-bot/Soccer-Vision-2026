@@ -1,6 +1,6 @@
 '''
  * file Vision-Espejo.py
- * author Jared Aldana Palacios 
+ * author Jared Aldana Palacios
  * brief Source file for the OpenMV
  * date 2026-02-26
  * - Comments: short bullet notes added
@@ -17,9 +17,9 @@ UART_PORT = 3
 UART_BAUDRATE = 115200
 
 
-THRESHOLD_BALL_1 =  (40, 100, 30, 127, 20, 127)
-THRESHOLD_BALL_2 =  (40, 100, 30, 127, 20, 127)
-THRESHOLD_BALL_3 =  (40, 100, 30, 127, 20, 127)
+THRESHOLD_BALL_1 =  (30, 74, 35, 63, 12, 42)
+THRESHOLD_BALL_2 =  (30, 74, 35, 63, 12, 42)
+THRESHOLD_BALL_3 =  (30, 74, 35, 63, 12, 42)
 
 THRESHOLD_YELLOW_GOAL_1 = (50, 73, -55, 48, 8, 28)
 THRESHOLD_YELLOW_GOAL_2 = (35, 71, 9, 28, 39, 74)
@@ -32,13 +32,13 @@ THRESHOLD_BLUE_GOAL_3 = (35, 100, -128, -10, -128, -10)
 BALL_MIN_CIRCULARITY = 0.3
 
 # - Reference center of the robot (mirror center)
-X_CENTER = 144
-Y_CENTER = 148
+X_CENTER = 60
+Y_CENTER = 115
 
 # Detection parameters
-BALL_AREA_THRESHOLD = 20        
-GOAL_AREA_THRESHOLD = 200       
-GOAL_PIXELS_THRESHOLD = 100     
+BALL_AREA_THRESHOLD = 20
+GOAL_AREA_THRESHOLD = 200
+GOAL_PIXELS_THRESHOLD = 100
 
 # Improved ball detection
 MINIMUN_CLOSE_AREA = 100
@@ -57,7 +57,7 @@ YELLOW_GOAL_MIN_DISTANCE = 10.0
 
 
 # Camera configuration
-CAMERA_EXPOSURE = 45000
+CAMERA_EXPOSURE = 50000
 CAMERA_GAIN_CEILING = 16
 CAMERA_BRIGHTNESS = -3
 CAMERA_CONTRAST = -4
@@ -66,7 +66,7 @@ CAMERA_SATURATION = -6
 # - Loop delay (ms)
 LOOP_DELAY = 50
 
-# INITIALIZATION 
+# INITIALIZATION
 
 def initialize_camera():
 
@@ -75,18 +75,18 @@ def initialize_camera():
     led.on()
     time.sleep(1)
     led.off()
-    
+
     # - configure sensor
     sensor.reset()
     sensor.set_pixformat(sensor.RGB565)
     sensor.set_framesize(sensor.QVGA)  # 320x240
-    
+
     print(" INITIALIZING CAMERA ")
     print("Gain Ceiling:", sensor.get_gain_db())
     print("Exposure:", sensor.get_exposure_us())
-    
+
     sensor.skip_frames(time=500)
-    
+
     sensor.set_auto_gain(False)
     sensor.set_gainceiling(CAMERA_GAIN_CEILING)
     sensor.set_auto_whitebal(False)
@@ -94,7 +94,7 @@ def initialize_camera():
     sensor.set_brightness(CAMERA_BRIGHTNESS)
     sensor.set_contrast(CAMERA_CONTRAST)
     sensor.set_saturation(CAMERA_SATURATION)
-    
+
     sensor.set_hmirror(True)
     sensor.set_vflip(False)
     sensor.set_transpose(True)
@@ -107,18 +107,18 @@ def initialize_uart():
     print("UART configured on port", UART_PORT, "at", UART_BAUDRATE, "baud\n")
     return uart
 
-# OBJECT DETECTION 
+# OBJECT DETECTION
 
 def find_ball(img):
 
     blobs = img.find_blobs(
-        [THRESHOLD_BALL_1, THRESHOLD_BALL_2, THRESHOLD_BALL_3], 
-        area_threshold=BALL_AREA_THRESHOLD, 
+        [THRESHOLD_BALL_1, THRESHOLD_BALL_2, THRESHOLD_BALL_3],
+        area_threshold=BALL_AREA_THRESHOLD,
         merge=True
     )
-    
+
     valid_blobs = []
-    
+
     if blobs:
         # - Prioritize larger blobs and those closer to the center
         blobs = sorted(
@@ -126,11 +126,11 @@ def find_ball(img):
             key=lambda BLOBS: (BLOBS.area(), -calculate_distance(BLOBS)),
             reverse=True
         )
-        
+
         for blob in blobs:
             area = blob.area()
-            circularity = blob.roundness() 
-            
+            circularity = blob.roundness()
+
             # Near ball
             if area >= MINIMUN_CLOSE_AREA and circularity > BALL_MIN_CIRCULARITY:
                 valid = True
@@ -139,19 +139,19 @@ def find_ball(img):
                 valid = True
             else:
                 valid = False
-            
+
             if valid:
-            
+
                 img.draw_rectangle(blob.rect(), color=(255, 255, 255))
                 img.draw_cross(blob.cx(), blob.cy(), color=(255, 255, 255))
 
                 if area >= MINIMUN_CLOSE_AREA :
                     radio = int((blob.w() + blob.h()) / 4)
                     img.draw_circle(blob.cx(), blob.cy(), radio, color=(255, 255, 255))
-                
+
                 valid_blobs.append(blob)
-                break      
-            
+                break
+
     return valid_blobs
 
 def find_blue_goal(img):
@@ -162,7 +162,7 @@ def find_blue_goal(img):
         area_threshold=GOAL_AREA_THRESHOLD,
         merge=True
     )
-    
+
     biggest_blue = []
     if blobs:
         # - pick biggest blue blob
@@ -170,7 +170,7 @@ def find_blue_goal(img):
         img.draw_rectangle(blob.rect(), color=(0, 0, 255))
         img.draw_cross(blob.cx(), blob.cy(), color=(0, 0, 255))
         biggest_blue.append(blob)
-    
+
     return biggest_blue
 
 def find_yellow_goal(img):
@@ -181,7 +181,7 @@ def find_yellow_goal(img):
         area_threshold=GOAL_AREA_THRESHOLD,
         merge=True
     )
-    
+
     biggest_yellow = []
     if blobs:
         # - pick biggest yellow blob
@@ -189,10 +189,10 @@ def find_yellow_goal(img):
         img.draw_rectangle(blob.rect(), color=(0, 255, 0))
         img.draw_cross(blob.cx(), blob.cy(), color=(0, 255, 0))
         biggest_yellow.append(blob)
-    
+
     return biggest_yellow
 
-# GEOMETRIC CALCULATIONS 
+# GEOMETRIC CALCULATIONS
 
 def calculate_distance(blob):
 
@@ -204,15 +204,15 @@ def calculate_angle(blob):
 
     dx = blob.cx() - X_CENTER
     dy = blob.cy() - Y_CENTER
-    
+
     angle_rad = math.atan2(dy, dx)
     angle_deg = math.degrees(angle_rad)
-    
+
     if angle_deg < 0.0:
         angle_deg = 360.0 + angle_deg
-    
+
     angle_adjusted = -(angle_deg - 180.0)
-    
+
     return angle_adjusted
 
 def apply_dead_zone(angle, dead_zone):
@@ -227,31 +227,31 @@ def correct_distance(distance, angle, correction, threshold_angle=135.0):
         return distance + correction
     return distance
 
-# MAIN LOOP 
+# MAIN LOOP
 
 def main():
 
     initialize_camera()
     uart = initialize_uart()
-    
+
     ball_distance = 0.0
     ball_angle = 0.0
     blue_goal_distance = 0.0
     blue_goal_angle = 0.0
     yellow_goal_distance = 0.0
     yellow_goal_angle = 0.0
-    
+
     clock = time.clock()
-    
+
     print(" STARTING DETECTION \n")
-    
+
     while True:
         clock.tick()
         img = sensor.snapshot()
-        
+
         img.draw_cross(X_CENTER, Y_CENTER, color=(255, 255, 255))
-        
-        # BALL DETECTION 
+
+        # BALL DETECTION
         ball_blobs = find_ball(img)
         if ball_blobs:
             blob = ball_blobs[0]
@@ -262,8 +262,8 @@ def main():
         else:
             ball_distance = 0.0
             ball_angle = 0.0
-        
-        # BLUE GOAL DETECTION 
+
+        # BLUE GOAL DETECTION
         blue_goal_blobs = find_blue_goal(img)
         if blue_goal_blobs:
             blob = blue_goal_blobs[0]
@@ -273,8 +273,8 @@ def main():
         else:
             blue_goal_distance = 0.0
             blue_goal_angle = 0.0
-        
-        # YELLOW GOAL DETECTION 
+
+        # YELLOW GOAL DETECTION
         yellow_goal_blobs = find_yellow_goal(img)
         if yellow_goal_blobs:
             blob = yellow_goal_blobs[0]
@@ -287,17 +287,17 @@ def main():
         else:
             yellow_goal_distance = 0.0
             yellow_goal_angle = 0.0
-        
-        # SEND DATA VIA UART 
+
+        # SEND DATA VIA UART
         data = "{:.1f} {:.1f} {:.1f} {:.1f} {:.1f} {:.1f}\n".format(
             ball_distance, ball_angle,
             blue_goal_distance, blue_goal_angle,
             yellow_goal_distance, yellow_goal_angle
         )
-        
+
         print("Sending:", data.strip())
         uart.write(data)
-        
+
         pyb.delay(LOOP_DELAY)
 
 if __name__ == "__main__":
